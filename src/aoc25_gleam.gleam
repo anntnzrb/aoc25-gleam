@@ -1,6 +1,7 @@
 import aoc/input
 import argv
 import day01
+import day02
 import dotenv_gleam
 import envoy
 import gleam/int
@@ -46,6 +47,12 @@ fn run_day(day_str: String) -> Result(Nil, String) {
   case day {
     1 -> {
       let #(p1, p2) = day01.run(puzzle_input)
+      io.println("Part 1: " <> int.to_string(p1))
+      io.println("Part 2: " <> int.to_string(p2))
+      Ok(Nil)
+    }
+    2 -> {
+      let #(p1, p2) = day02.run(puzzle_input)
       io.println("Part 1: " <> int.to_string(p1))
       io.println("Part 2: " <> int.to_string(p2))
       Ok(Nil)
