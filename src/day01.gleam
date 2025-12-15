@@ -27,7 +27,7 @@ pub fn parse_rotation(line: String) -> Result(Rotation, Nil) {
   }
 }
 
-pub fn parse_input(input: String) -> List(Rotation) {
+pub fn parse(input: String) -> List(Rotation) {
   input
   |> string.split("\n")
   |> list.filter_map(parse_rotation)
@@ -41,8 +41,7 @@ fn mod100(n: Int) -> Int {
   }
 }
 
-pub fn part1(input: String) -> Int {
-  let rotations = parse_input(input)
+pub fn part1(rotations: List(Rotation)) -> Int {
   let start_pos = 50
 
   // Count times dial ENDS at 0 after each rotation
@@ -104,8 +103,7 @@ fn count_zeros_crossed(pos: Int, dist: Int, dir: Direction) -> Int {
   }
 }
 
-pub fn part2(input: String) -> Int {
-  let rotations = parse_input(input)
+pub fn part2(rotations: List(Rotation)) -> Int {
   let start_pos = 50
 
   let #(_, count) =
@@ -123,5 +121,6 @@ pub fn part2(input: String) -> Int {
 }
 
 pub fn run(input: String) -> #(Int, Int) {
-  #(part1(input), part2(input))
+  let parsed = parse(input)
+  #(part1(parsed), part2(parsed))
 }

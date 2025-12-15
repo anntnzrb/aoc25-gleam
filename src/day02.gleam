@@ -20,7 +20,7 @@ fn parse_range(s: String) -> Result(Range, Nil) {
 }
 
 /// Parse "11-22,95-115,..." -> List(Range)
-fn parse_input(input: String) -> List(Range) {
+pub fn parse(input: String) -> List(Range) {
   input
   |> string.trim
   |> string.split(",")
@@ -75,14 +75,15 @@ fn sum_invalid(ranges: List(Range), is_invalid: fn(Int) -> Bool) -> Int {
   |> int.sum
 }
 
-pub fn part1(input: String) -> Int {
-  parse_input(input) |> sum_invalid(is_doubled)
+pub fn part1(ranges: List(Range)) -> Int {
+  sum_invalid(ranges, is_doubled)
 }
 
-pub fn part2(input: String) -> Int {
-  parse_input(input) |> sum_invalid(is_repeated)
+pub fn part2(ranges: List(Range)) -> Int {
+  sum_invalid(ranges, is_repeated)
 }
 
 pub fn run(input: String) -> #(Int, Int) {
-  #(part1(input), part2(input))
+  let parsed = parse(input)
+  #(part1(parsed), part2(parsed))
 }

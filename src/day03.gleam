@@ -3,7 +3,7 @@ import gleam/list
 import gleam/string
 
 /// Parse input into list of battery banks (lines)
-fn parse_input(input: String) -> List(String) {
+pub fn parse(input: String) -> List(String) {
   input
   |> string.trim
   |> string.split("\n")
@@ -55,8 +55,8 @@ fn max_joltage(bank: String) -> Int {
   }
 }
 
-pub fn part1(input: String) -> Int {
-  parse_input(input)
+pub fn part1(banks: List(String)) -> Int {
+  banks
   |> list.map(max_joltage)
   |> int.sum
 }
@@ -103,12 +103,13 @@ fn max_12_joltage(bank: String) -> Int {
   |> digits_to_int
 }
 
-pub fn part2(input: String) -> Int {
-  parse_input(input)
+pub fn part2(banks: List(String)) -> Int {
+  banks
   |> list.map(max_12_joltage)
   |> int.sum
 }
 
 pub fn run(input: String) -> #(Int, Int) {
-  #(part1(input), part2(input))
+  let parsed = parse(input)
+  #(part1(parsed), part2(parsed))
 }
