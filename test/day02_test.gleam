@@ -142,3 +142,40 @@ pub fn part2_six_digit_pattern_test() {
   |> part2
   |> should.equal(123_123)
 }
+
+pub fn part2_single_digit_repeated_test() {
+  // 1111 is 1 repeated 4 times (pattern_len=1, repeat_count=4)
+  parse("1110-1112")
+  |> part2
+  |> should.equal(1111)
+}
+
+pub fn part2_single_digit_twice_test() {
+  // 11, 22, ..., 99 are single digits repeated twice
+  parse("11-11")
+  |> part2
+  |> should.equal(11)
+}
+
+pub fn part1_empty_ranges_test() {
+  // Empty ranges should return 0
+  parse("")
+  |> part1
+  |> should.equal(0)
+}
+
+pub fn part2_empty_ranges_test() {
+  // Empty ranges should return 0
+  parse("")
+  |> part2
+  |> should.equal(0)
+}
+
+pub fn part1_multiple_doubled_in_range_test() {
+  // Range 1000-2000 contains 1010, 1111, 1212, ..., 1919
+  // Count: 1010, 1111, 1212, 1313, 1414, 1515, 1616, 1717, 1818, 1919 = 10 numbers
+  // Sum = 1010+1111+1212+1313+1414+1515+1616+1717+1818+1919 = 14645
+  parse("1000-2000")
+  |> part1
+  |> should.equal(14_645)
+}

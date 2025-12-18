@@ -182,3 +182,65 @@ pub fn part2_multiple_banks_test() {
   part2(["987654321111111", "811111111111119"])
   |> should.equal(987_654_321_111 + 811_111_111_119)
 }
+
+// ============================================================================
+// Additional coverage tests
+// ============================================================================
+
+pub fn part1_single_digit_bank_test() {
+  // Bank with only one digit - can't form 2-digit number
+  part1(["5"])
+  |> should.equal(0)
+}
+
+pub fn part1_empty_bank_test() {
+  // Empty bank string
+  part1([""])
+  |> should.equal(0)
+}
+
+pub fn part1_with_non_digits_test() {
+  // Bank with letters and digits mixed
+  part1(["a1b2c3d"])
+  |> should.equal(23)
+  // Only digits: 1,2,3 -> best is 23 (2*10+3)
+}
+
+pub fn part2_exactly_12_digits_greedy_test() {
+  // Bank with exactly 12 digits - no flexibility, pick in order
+  part2(["111122223333"])
+  |> should.equal(111_122_223_333)
+}
+
+pub fn part2_more_than_12_digits_greedy_test() {
+  // Bank with 15 digits - greedy algorithm picks best 12
+  // 999111111111111 -> picks 999 first, then 111111111
+  part2(["999111111111111"])
+  |> should.equal(999_111_111_111)
+}
+
+pub fn part2_with_non_digits_test() {
+  // Mixed content - only digits count
+  // 12 digits total, pick in order (no flexibility)
+  part2(["abc123def456ghi789jkl012mno"])
+  |> should.equal(123_456_789_012)
+}
+
+pub fn parse_whitespace_only_test() {
+  // Whitespace only should be filtered
+  parse("   \n  \n  ")
+  |> should.equal([])
+}
+
+pub fn part1_all_nines_test() {
+  // All same digits
+  part1(["99999"])
+  |> should.equal(99)
+}
+
+pub fn suffix_max_edge_test() {
+  // Test suffix max computation with descending sequence
+  part1(["987654321"])
+  |> should.equal(98)
+  // 9 followed by max of rest (8) = 98
+}

@@ -160,6 +160,38 @@ pub fn part2_empty_test() {
   |> should.equal(0)
 }
 
+pub fn part2_start_at_zero_go_left_test() {
+  // Start at 50, L50 -> 0, then L100 from 0 crosses 0 once (at step 100)
+  [Rotation(Left, 50), Rotation(Left, 100)]
+  |> part2
+  |> should.equal(2)
+  // First: 50 steps left crosses 0 once
+  // Second: from 0, 100 steps left crosses 0 once (at step 100)
+}
+
+pub fn part2_start_at_zero_go_right_test() {
+  // Start at 50, L50 -> 0, then R200 from 0 crosses 0 twice (at 100, 200)
+  [Rotation(Left, 50), Rotation(Right, 200)]
+  |> part2
+  |> should.equal(3)
+  // First: 1 crossing
+  // Second: from 0, first_hit=100, 1 + (200-100)/100 = 2 crossings
+}
+
+pub fn part2_left_no_crossing_test() {
+  // Start at 50, L10 -> 40, doesn't cross 0
+  [Rotation(Left, 10)]
+  |> part2
+  |> should.equal(0)
+}
+
+pub fn part2_left_multiple_wraps_test() {
+  // Start at 50, L250 crosses 0 three times (at 50, 150, 250)
+  [Rotation(Left, 250)]
+  |> part2
+  |> should.equal(3)
+}
+
 // ============================================================================
 // run tests
 // ============================================================================
