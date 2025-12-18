@@ -10,6 +10,9 @@ import day06
 import day07
 import day08
 import day09
+import day10
+import day11
+import day12
 import dotenv_gleam
 import envoy
 import gleam/int
@@ -49,7 +52,7 @@ fn handle_result(result: Result(Nil, String)) -> Nil {
 // ---------------------------------------------------------------------------
 
 fn run_all(bench_mode: Bool) -> Nil {
-  list.range(1, 9)
+  list.range(1, 12)
   |> list.each(fn(day) {
     day
     |> int.to_string
@@ -126,6 +129,9 @@ fn solvers() -> List(fn(String) -> #(Int, Int)) {
     day07.run,
     day08.run,
     day09.run,
+    day10.run,
+    day11.run,
+    day12.run,
   ]
 }
 
