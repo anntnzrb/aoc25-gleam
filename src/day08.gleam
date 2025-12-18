@@ -32,107 +32,7 @@ fn distance_squared(a: Point, b: Point) -> Int {
   dx * dx + dy * dy + dz * dz
 }
 
-/// Generate and sort all pairs - using list directly for faster access
-fn all_pairs_sorted(points: List(Point)) -> List(#(Int, Int, Int)) {
-  let indexed = list.index_map(points, fn(p, i) { #(i, p) })
-
-  indexed
-  |> list.flat_map(fn(ip) {
-    let #(i, p1) = ip
-    indexed
-    |> list.filter_map(fn(jp) {
-      let #(j, p2) = jp
-      case j > i {
-        True -> Ok(#(distance_squared(p1, p2), i, j))
-        False -> Error(Nil)
-      }
-    })
-  })
-  |> list.sort(fn(a, b) {
-    let #(d1, _, _) = a
-    let #(d2, _, _) = b
-    int.compare(d1, d2)
-  })
-}
-
-/// Prim's MST - returns max weight edge (bottleneck)
-fn prims_mst_bottleneck(points: List(Point)) -> #(Int, Int, Int) {
-  let n = list.length(points)
-  case n {
-    0 | 1 -> #(0, 0, 0)
-    _ -> {
-      let points_arr =
-        list.index_map(points, fn(p, i) { #(i, p) }) |> dict.from_list
-      let p0 = dict.get(points_arr, 0) |> result.unwrap(Point(0, 0, 0))
-
-      let dist_to_tree =
-        list.range(1, n - 1)
-        |> list.fold(dict.new(), fn(d, i) {
-          let pi = dict.get(points_arr, i) |> result.unwrap(Point(0, 0, 0))
-          dict.insert(d, i, #(distance_squared(p0, pi), 0))
-        })
-
-      build_mst_find_max(points_arr, n, 1, dist_to_tree, #(0, 0, 0))
-    }
-  }
-}
-
-fn build_mst_find_max(
-  points: Dict(Int, Point),
-  n: Int,
-  tree_size: Int,
-  dist_to_tree: Dict(Int, #(Int, Int)),
-  max_edge: #(Int, Int, Int),
-) -> #(Int, Int, Int) {
-  case tree_size >= n {
-    True -> max_edge
-    False -> {
-      let #(min_node, min_dist, min_tree_node) =
-        dist_to_tree
-        |> dict.to_list
-        |> list.fold(#(-1, 999_999_999_999, -1), fn(acc, entry) {
-          let #(_, best_dist, _) = acc
-          let #(node, #(dist, tree_node)) = entry
-          case dist < best_dist {
-            True -> #(node, dist, tree_node)
-            False -> acc
-          }
-        })
-
-      let #(max_dist, _, _) = max_edge
-      let new_max_edge = case min_dist > max_dist {
-        True -> #(min_dist, min_tree_node, min_node)
-        False -> max_edge
-      }
-
-      let min_point =
-        dict.get(points, min_node) |> result.unwrap(Point(0, 0, 0))
-      let new_dist_to_tree =
-        dist_to_tree
-        |> dict.delete(min_node)
-        |> dict.to_list
-        |> list.fold(dict.new(), fn(d, entry) {
-          let #(node, #(old_dist, old_tree)) = entry
-          let node_point =
-            dict.get(points, node) |> result.unwrap(Point(0, 0, 0))
-          let new_dist = distance_squared(min_point, node_point)
-          case new_dist < old_dist {
-            True -> dict.insert(d, node, #(new_dist, min_node))
-            False -> dict.insert(d, node, #(old_dist, old_tree))
-          }
-        })
-
-      build_mst_find_max(
-        points,
-        n,
-        tree_size + 1,
-        new_dist_to_tree,
-        new_max_edge,
-      )
-    }
-  }
-}
-
+// Union-Find using Dict (reverting to original for correctness)
 pub type UnionFind {
   UnionFind(parent: Dict(Int, Int), rank: Dict(Int, Int))
 }
@@ -212,25 +112,21 @@ fn solve_both(points: List(Point)) -> #(Int, Int) {
       let points_arr =
         list.index_map(points, fn(p, i) { #(i, p) }) |> dict.from_list
 
-      // Part 2: Prim's MST bottleneck
-      let #(_, i2, j2) = prims_mst_bottleneck(points)
-      let p2_1 = dict.get(points_arr, i2) |> result.unwrap(Point(0, 0, 0))
-      let p2_2 = dict.get(points_arr, j2) |> result.unwrap(Point(0, 0, 0))
-      let part2 = p2_1.x * p2_2.x
+      // Compute all pairs with distances once and sort
+      let sorted_pairs = compute_and_sort_pairs(points)
 
-      // Part 1: Sort all pairs, take 1000
-      let pairs = all_pairs_sorted(points)
-      let uf = uf_new(n)
-      let final_uf =
-        pairs
+      // Part 1: Take first 1000 pairs for union-find
+      let uf1 = uf_new(n)
+      let final_uf1 =
+        sorted_pairs
         |> list.take(1000)
-        |> list.fold(uf, fn(u, pair) {
+        |> list.fold(uf1, fn(u, pair) {
           let #(_, i, j) = pair
           uf_union(u, i, j)
         })
 
       let sizes =
-        get_circuit_sizes(final_uf, n)
+        get_circuit_sizes(final_uf1, n)
         |> list.sort(fn(a, b) { int.compare(b, a) })
         |> list.take(3)
 
@@ -241,7 +137,71 @@ fn solve_both(points: List(Point)) -> #(Int, Int) {
         [] -> 0
       }
 
+      // Part 2: Kruskal's MST - find max edge
+      let #(_, i2, j2) = kruskal_mst(sorted_pairs, n)
+      let p2_1 = dict.get(points_arr, i2) |> result.unwrap(Point(0, 0, 0))
+      let p2_2 = dict.get(points_arr, j2) |> result.unwrap(Point(0, 0, 0))
+      let part2 = p2_1.x * p2_2.x
+
       #(part1, part2)
+    }
+  }
+}
+
+fn compute_and_sort_pairs(points: List(Point)) -> List(#(Int, Int, Int)) {
+  let indexed = list.index_map(points, fn(p, i) { #(i, p) })
+  indexed
+  |> list.flat_map(fn(ip) {
+    let #(i, p1) = ip
+    indexed
+    |> list.filter_map(fn(jp) {
+      let #(j, p2) = jp
+      case j > i {
+        True -> Ok(#(distance_squared(p1, p2), i, j))
+        False -> Error(Nil)
+      }
+    })
+  })
+  |> list.sort(fn(a, b) { int.compare(a.0, b.0) })
+}
+
+/// Kruskal's MST - returns the max weight edge (bottleneck)
+fn kruskal_mst(sorted_pairs: List(#(Int, Int, Int)), n: Int) -> #(Int, Int, Int) {
+  let uf = uf_new(n)
+  kruskal_mst_loop(sorted_pairs, uf, 0, n, #(0, 0, 0))
+}
+
+fn kruskal_mst_loop(
+  pairs: List(#(Int, Int, Int)),
+  uf: UnionFind,
+  mst_edges: Int,
+  n: Int,
+  max_edge: #(Int, Int, Int),
+) -> #(Int, Int, Int) {
+  case mst_edges >= n - 1 {
+    True -> max_edge
+    False -> {
+      case pairs {
+        [] -> max_edge
+        [pair, ..rest] -> {
+          let #(dist, i, j) = pair
+          let #(uf1, root_i) = uf_find(uf, i)
+          let #(uf2, root_j) = uf_find(uf1, j)
+
+          case root_i != root_j {
+            True -> {
+              let new_uf = uf_union(uf2, i, j)
+              let #(max_dist, _, _) = max_edge
+              let new_max = case dist > max_dist {
+                True -> #(dist, i, j)
+                False -> max_edge
+              }
+              kruskal_mst_loop(rest, new_uf, mst_edges + 1, n, new_max)
+            }
+            False -> kruskal_mst_loop(rest, uf2, mst_edges, n, max_edge)
+          }
+        }
+      }
     }
   }
 }

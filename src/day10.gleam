@@ -632,61 +632,180 @@ fn explore_free_vars_v2(
   n_buttons: Int,
   free_cols: List(Int),
 ) -> Int {
-  // Search over free variable values based on RHS magnitude
   let max_rhs =
     matrix
     |> list.map(fn(row) { row |> list.last |> result.unwrap(0) })
     |> list.fold(0, fn(a, b) { int.max(a, int.absolute_value(b)) })
 
-  // Scale max_val based on number of free variables to avoid explosion
   let n_free = list.length(free_cols)
-  let max_val = case n_free {
-    0 -> max_rhs
-    1 -> max_rhs
-    2 -> int.min(max_rhs, 200)
-    _ -> int.min(max_rhs, 100)
-  }
 
-  explore_free_recursive_v2(
-    matrix,
-    pivot_info,
-    n_buttons,
-    free_cols,
-    max_val,
-    [],
-    999_999_999,
-  )
+  case n_free {
+    0 -> try_back_substitute_v2(matrix, pivot_info, n_buttons, [])
+    1 -> {
+      // Single free var: just iterate
+      let col = case free_cols {
+        [c, ..] -> c
+        [] -> 0
+      }
+      explore_single_loop(
+        matrix,
+        pivot_info,
+        n_buttons,
+        col,
+        0,
+        max_rhs,
+        999_999_999,
+      )
+    }
+    _ -> {
+      // Multiple free vars: try zeros first to get a bound
+      let zeros_vals = free_cols |> list.map(fn(c) { #(c, 0) })
+      let zeros_result =
+        try_back_substitute_v2(matrix, pivot_info, n_buttons, zeros_vals)
+      // Use bounds based on number of free vars
+      let max_per_var = case n_free {
+        2 -> int.min(max_rhs, 200)
+        _ -> int.min(max_rhs, 100)
+      }
+      // Use zeros result as bound if valid
+      case zeros_result < 999_999_999 {
+        True -> {
+          // Found valid with zeros, search for better with tight bound
+          let bound = int.min(max_per_var, zeros_result)
+          explore_multi_free(
+            matrix,
+            pivot_info,
+            n_buttons,
+            free_cols,
+            bound,
+            [],
+            zeros_result,
+            0,
+          )
+        }
+        False -> {
+          // No solution with zeros, need full search
+          explore_multi_free(
+            matrix,
+            pivot_info,
+            n_buttons,
+            free_cols,
+            max_per_var,
+            [],
+            999_999_999,
+            0,
+          )
+        }
+      }
+    }
+  }
 }
 
-fn explore_free_recursive_v2(
+fn explore_single_loop(
   matrix: List(List(Int)),
   pivot_info: List(#(Int, Int)),
   n_buttons: Int,
-  remaining_free: List(Int),
+  col: Int,
+  val: Int,
   max_val: Int,
-  current_vals: List(#(Int, Int)),
   best: Int,
 ) -> Int {
-  case remaining_free {
-    [] -> {
+  case val > max_val || val >= best {
+    True -> best
+    False -> {
       let result =
-        try_back_substitute_v2(matrix, pivot_info, n_buttons, current_vals)
-      int.min(best, result)
+        try_back_substitute_v2(matrix, pivot_info, n_buttons, [#(col, val)])
+      let new_best = int.min(best, result)
+      explore_single_loop(
+        matrix,
+        pivot_info,
+        n_buttons,
+        col,
+        val + 1,
+        max_val,
+        new_best,
+      )
     }
-    [col, ..rest] -> {
-      list.range(0, max_val)
-      |> list.fold(best, fn(b, val) {
-        let new_vals = [#(col, val), ..current_vals]
-        explore_free_recursive_v2(
+  }
+}
+
+fn explore_multi_free(
+  matrix: List(List(Int)),
+  pivot_info: List(#(Int, Int)),
+  n_buttons: Int,
+  remaining: List(Int),
+  max_per_var: Int,
+  current_vals: List(#(Int, Int)),
+  best: Int,
+  current_sum: Int,
+) -> Int {
+  case current_sum >= best {
+    True -> best
+    False -> {
+      case remaining {
+        [] -> {
+          let result =
+            try_back_substitute_v2(matrix, pivot_info, n_buttons, current_vals)
+          int.min(best, result)
+        }
+        [col, ..rest] -> {
+          explore_multi_loop(
+            matrix,
+            pivot_info,
+            n_buttons,
+            col,
+            rest,
+            max_per_var,
+            current_vals,
+            best,
+            current_sum,
+            0,
+          )
+        }
+      }
+    }
+  }
+}
+
+fn explore_multi_loop(
+  matrix: List(List(Int)),
+  pivot_info: List(#(Int, Int)),
+  n_buttons: Int,
+  col: Int,
+  rest: List(Int),
+  max_per_var: Int,
+  current_vals: List(#(Int, Int)),
+  best: Int,
+  current_sum: Int,
+  val: Int,
+) -> Int {
+  case val > max_per_var || current_sum + val >= best {
+    True -> best
+    False -> {
+      let new_vals = [#(col, val), ..current_vals]
+      let new_best =
+        explore_multi_free(
           matrix,
           pivot_info,
           n_buttons,
           rest,
-          max_val,
+          max_per_var,
           new_vals,
-          b,
+          best,
+          current_sum + val,
         )
-      })
+      explore_multi_loop(
+        matrix,
+        pivot_info,
+        n_buttons,
+        col,
+        rest,
+        max_per_var,
+        current_vals,
+        new_best,
+        current_sum,
+        val + 1,
+      )
     }
   }
 }
