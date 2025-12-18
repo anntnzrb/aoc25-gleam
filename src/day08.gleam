@@ -61,7 +61,8 @@ fn prims_mst_bottleneck(points: List(Point)) -> #(Int, Int, Int) {
   case n {
     0 | 1 -> #(0, 0, 0)
     _ -> {
-      let points_arr = list.index_map(points, fn(p, i) { #(i, p) }) |> dict.from_list
+      let points_arr =
+        list.index_map(points, fn(p, i) { #(i, p) }) |> dict.from_list
       let p0 = dict.get(points_arr, 0) |> result.unwrap(Point(0, 0, 0))
 
       let dist_to_tree =
@@ -104,14 +105,16 @@ fn build_mst_find_max(
         False -> max_edge
       }
 
-      let min_point = dict.get(points, min_node) |> result.unwrap(Point(0, 0, 0))
+      let min_point =
+        dict.get(points, min_node) |> result.unwrap(Point(0, 0, 0))
       let new_dist_to_tree =
         dist_to_tree
         |> dict.delete(min_node)
         |> dict.to_list
         |> list.fold(dict.new(), fn(d, entry) {
           let #(node, #(old_dist, old_tree)) = entry
-          let node_point = dict.get(points, node) |> result.unwrap(Point(0, 0, 0))
+          let node_point =
+            dict.get(points, node) |> result.unwrap(Point(0, 0, 0))
           let new_dist = distance_squared(min_point, node_point)
           case new_dist < old_dist {
             True -> dict.insert(d, node, #(new_dist, min_node))
@@ -119,7 +122,13 @@ fn build_mst_find_max(
           }
         })
 
-      build_mst_find_max(points, n, tree_size + 1, new_dist_to_tree, new_max_edge)
+      build_mst_find_max(
+        points,
+        n,
+        tree_size + 1,
+        new_dist_to_tree,
+        new_max_edge,
+      )
     }
   }
 }
@@ -129,8 +138,12 @@ pub type UnionFind {
 }
 
 fn uf_new(n: Int) -> UnionFind {
-  let parent = list.range(0, n - 1) |> list.fold(dict.new(), fn(d, i) { dict.insert(d, i, i) })
-  let rank = list.range(0, n - 1) |> list.fold(dict.new(), fn(d, i) { dict.insert(d, i, 0) })
+  let parent =
+    list.range(0, n - 1)
+    |> list.fold(dict.new(), fn(d, i) { dict.insert(d, i, i) })
+  let rank =
+    list.range(0, n - 1)
+    |> list.fold(dict.new(), fn(d, i) { dict.insert(d, i, 0) })
   UnionFind(parent:, rank:)
 }
 
@@ -155,10 +168,12 @@ fn uf_union(uf: UnionFind, x: Int, y: Int) -> UnionFind {
       let rank_x = dict.get(uf2.rank, root_x) |> result.unwrap(0)
       let rank_y = dict.get(uf2.rank, root_y) |> result.unwrap(0)
       case rank_x < rank_y {
-        True -> UnionFind(..uf2, parent: dict.insert(uf2.parent, root_x, root_y))
+        True ->
+          UnionFind(..uf2, parent: dict.insert(uf2.parent, root_x, root_y))
         False ->
           case rank_x > rank_y {
-            True -> UnionFind(..uf2, parent: dict.insert(uf2.parent, root_y, root_x))
+            True ->
+              UnionFind(..uf2, parent: dict.insert(uf2.parent, root_y, root_x))
             False -> {
               let new_parent = dict.insert(uf2.parent, root_y, root_x)
               let new_rank = dict.insert(uf2.rank, root_x, rank_x + 1)
@@ -194,7 +209,8 @@ fn solve_both(points: List(Point)) -> #(Int, Int) {
     0 -> #(0, 0)
     1 -> #(1, 0)
     _ -> {
-      let points_arr = list.index_map(points, fn(p, i) { #(i, p) }) |> dict.from_list
+      let points_arr =
+        list.index_map(points, fn(p, i) { #(i, p) }) |> dict.from_list
 
       // Part 2: Prim's MST bottleneck
       let #(_, i2, j2) = prims_mst_bottleneck(points)

@@ -44,7 +44,8 @@ fn to_grid(input: String) -> #(CharGrid, Int, Int) {
 
 /// Get character at position, default to space
 fn get_char(grid: CharGrid, row: Int, col: Int) -> String {
-  dict.get(grid, #(row, col)) |> fn(r) {
+  dict.get(grid, #(row, col))
+  |> fn(r) {
     case r {
       Ok(c) -> c
       Error(_) -> " "
@@ -59,7 +60,11 @@ fn is_separator_col(grid: CharGrid, col: Int, height: Int) -> Bool {
 }
 
 /// Find problem boundaries (start_col, end_col pairs)
-fn find_problem_bounds(grid: CharGrid, width: Int, height: Int) -> List(#(Int, Int)) {
+fn find_problem_bounds(
+  grid: CharGrid,
+  width: Int,
+  height: Int,
+) -> List(#(Int, Int)) {
   find_bounds_loop(grid, 0, width, height, -1, [])
 }
 

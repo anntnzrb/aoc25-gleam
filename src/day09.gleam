@@ -64,21 +64,25 @@ fn build_polygon_data(points: List(Point)) -> PolygonData {
 
   PolygonData(
     red_set:,
-    h_edges_sorted: h_edges |> list.sort(fn(a, b) {
-      let #(y1, _, _) = a
-      let #(y2, _, _) = b
-      int.compare(y1, y2)
-    }),
-    v_edges_sorted: v_edges |> list.sort(fn(a, b) {
-      let #(x1, _, _) = a
-      let #(x2, _, _) = b
-      int.compare(x1, x2)
-    }),
+    h_edges_sorted: h_edges
+      |> list.sort(fn(a, b) {
+        let #(y1, _, _) = a
+        let #(y2, _, _) = b
+        int.compare(y1, y2)
+      }),
+    v_edges_sorted: v_edges
+      |> list.sort(fn(a, b) {
+        let #(x1, _, _) = a
+        let #(x2, _, _) = b
+        int.compare(x1, x2)
+      }),
     polygon_pairs:,
   )
 }
 
-fn build_edge_lists(points: List(Point)) -> #(List(#(Int, Int, Int)), List(#(Int, Int, Int))) {
+fn build_edge_lists(
+  points: List(Point),
+) -> #(List(#(Int, Int, Int)), List(#(Int, Int, Int))) {
   case points {
     [] | [_] -> #([], [])
     [first, ..] -> {
@@ -136,7 +140,16 @@ fn is_valid_rectangle_fast(p1: Point, p2: Point, data: PolygonData) -> Bool {
   let max_y = int.max(p1.y, p2.y)
 
   // Check edge crossing FIRST - most rectangles fail here
-  case has_edge_crossing(min_x, max_x, min_y, max_y, data.h_edges_sorted, data.v_edges_sorted) {
+  case
+    has_edge_crossing(
+      min_x,
+      max_x,
+      min_y,
+      max_y,
+      data.h_edges_sorted,
+      data.v_edges_sorted,
+    )
+  {
     True -> False
     False -> {
       // Only 2 corners to check (p1 and p2 are red tiles)
@@ -148,16 +161,25 @@ fn is_valid_rectangle_fast(p1: Point, p2: Point, data: PolygonData) -> Bool {
   }
 }
 
-fn get_other_corners(p1: Point, _p2: Point, min_x: Int, max_x: Int, min_y: Int, max_y: Int) -> List(Point) {
+fn get_other_corners(
+  p1: Point,
+  _p2: Point,
+  min_x: Int,
+  max_x: Int,
+  min_y: Int,
+  max_y: Int,
+) -> List(Point) {
   case p1.x == min_x && p1.y == min_y {
     True -> [Point(min_x, max_y), Point(max_x, min_y)]
-    False -> case p1.x == min_x && p1.y == max_y {
-      True -> [Point(min_x, min_y), Point(max_x, max_y)]
-      False -> case p1.x == max_x && p1.y == min_y {
+    False ->
+      case p1.x == min_x && p1.y == max_y {
         True -> [Point(min_x, min_y), Point(max_x, max_y)]
-        False -> [Point(min_x, max_y), Point(max_x, min_y)]
+        False ->
+          case p1.x == max_x && p1.y == min_y {
+            True -> [Point(min_x, min_y), Point(max_x, max_y)]
+            False -> [Point(min_x, max_y), Point(max_x, min_y)]
+          }
       }
-    }
   }
 }
 
@@ -178,12 +200,19 @@ fn has_edge_crossing(
   }
 }
 
-fn check_h_edges_sorted(edges: List(#(Int, Int, Int)), min_x: Int, max_x: Int, min_y: Int, max_y: Int) -> Bool {
+fn check_h_edges_sorted(
+  edges: List(#(Int, Int, Int)),
+  min_x: Int,
+  max_x: Int,
+  min_y: Int,
+  max_y: Int,
+) -> Bool {
   case edges {
     [] -> False
     [#(y, x1, x2), ..rest] -> {
       case y >= max_y {
-        True -> False  // Early exit - all remaining edges have y >= max_y
+        True -> False
+        // Early exit - all remaining edges have y >= max_y
         False -> {
           case y > min_y && x1 < max_x && x2 > min_x {
             True -> True
@@ -195,12 +224,19 @@ fn check_h_edges_sorted(edges: List(#(Int, Int, Int)), min_x: Int, max_x: Int, m
   }
 }
 
-fn check_v_edges_sorted(edges: List(#(Int, Int, Int)), min_x: Int, max_x: Int, min_y: Int, max_y: Int) -> Bool {
+fn check_v_edges_sorted(
+  edges: List(#(Int, Int, Int)),
+  min_x: Int,
+  max_x: Int,
+  min_y: Int,
+  max_y: Int,
+) -> Bool {
   case edges {
     [] -> False
     [#(x, y1, y2), ..rest] -> {
       case x >= max_x {
-        True -> False  // Early exit - all remaining edges have x >= max_x
+        True -> False
+        // Early exit - all remaining edges have x >= max_x
         False -> {
           case x > min_x && y1 < max_y && y2 > min_y {
             True -> True
@@ -283,12 +319,9 @@ fn ray_crosses_edge(point: Point, e1: Point, e2: Point) -> Bool {
             True -> point.x < low.x
             False -> {
               let t =
-                int.to_float(point.y - low.y)
-                /. int.to_float(high.y - low.y)
+                int.to_float(point.y - low.y) /. int.to_float(high.y - low.y)
               let x_intersect =
-                int.to_float(low.x)
-                +. t
-                *. int.to_float(high.x - low.x)
+                int.to_float(low.x) +. t *. int.to_float(high.x - low.x)
               int.to_float(point.x) <. x_intersect
             }
           }

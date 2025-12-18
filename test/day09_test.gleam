@@ -245,7 +245,7 @@ pub fn part1_large_coords_test() {
   // Large coordinates - tests area calculation
   parse("0,0\n10000,10000")
   |> part1
-  |> should.equal(10001 * 10001)
+  |> should.equal(10_001 * 10_001)
 }
 
 pub fn part2_large_polygon_test() {

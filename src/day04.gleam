@@ -26,9 +26,14 @@ pub fn parse(input: String) -> Set(Pos) {
 fn neighbors(pos: Pos) -> List(Pos) {
   let #(r, c) = pos
   [
-    #(r - 1, c - 1), #(r - 1, c), #(r - 1, c + 1),
-    #(r, c - 1), #(r, c + 1),
-    #(r + 1, c - 1), #(r + 1, c), #(r + 1, c + 1),
+    #(r - 1, c - 1),
+    #(r - 1, c),
+    #(r - 1, c + 1),
+    #(r, c - 1),
+    #(r, c + 1),
+    #(r + 1, c - 1),
+    #(r + 1, c),
+    #(r + 1, c + 1),
   ]
 }
 
@@ -76,9 +81,8 @@ fn remove_loop(rolls: Set(Pos), accessible: List(Pos), total: Int) -> Int {
       let count = list.length(accessible)
 
       // Remove accessible rolls
-      let new_rolls = list.fold(accessible, rolls, fn(r, pos) {
-        set.delete(r, pos)
-      })
+      let new_rolls =
+        list.fold(accessible, rolls, fn(r, pos) { set.delete(r, pos) })
 
       // Only recheck neighbors of removed rolls (that are still rolls)
       let candidates = all_neighbors(accessible)

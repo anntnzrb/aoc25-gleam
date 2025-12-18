@@ -77,7 +77,12 @@ fn count_splits_merged(
           }
         })
 
-      count_splits_merged(grid, row + 1, new_cols, total_splits + splits_this_row)
+      count_splits_merged(
+        grid,
+        row + 1,
+        new_cols,
+        total_splits + splits_this_row,
+      )
     }
   }
 }
